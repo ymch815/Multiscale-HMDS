@@ -1,0 +1,31 @@
+Parameters to reproduce experiments in Figure 2, 3, 4, 5 and Supp figures
+
+Figure 2 and Figure 5b, testing different parameter settings, different number of layers
+Experiment 1: only one layer, effect of cluster number/size and n neighbors. 
+x = 25, 50, 100, 150, 200, 300, 400, 500
+python Generate_cls.py FeatMat_Paul_PCA100.txt [x]
+
+Figure 5b
+Experiment 3-2: two layers, varying number of the larger layer (cluster of clusters)
+x = 25, 50, 100, 150, 200, 300, nn = 20, 10
+python Generate_cls.py FeatMat_Paul_PCA100.txt 500,[x]
+
+Experiment 3-3: three layers, varying number of two of the layers
+x = 50, 100, 150, 200, 300
+python Generate_cls.py FeatMat_Paul_PCA100.txt 500,[x],25
+y = 50, 100, 150, 200
+python Generate_cls.py FeatMat_Paul_PCA100.txt 500,300,[y]
+
+Figure 3: Benchmark datasets
+python Generate_cls.py FeatMat_Celegans_10k_PCA100.txt 300
+python Generate_cls.py FeatMat_Celegans_40k_PCA100.txt 200
+python Generate_cls.py FeatMat_Krumsiek11.txt 50
+python Generate_cls.py FeatMat_Olsson_PCA100.txt 40
+python Generate_cls.py FeatMat_Paul_PCA100.txt 100
+python Generate_cls.py FeatMat_ToggleSwitch.txt 20
+
+Figure 4: ABpxp lineage
+python Generate_cls.py FeatMat_Celegans_PCA50_lineage_ABpxp.txt 50
+
+figure 5: 80k C elegans using multilayer
+python Generate_cls.py FeatMat_Celegans_PCA100.txt 800,100 

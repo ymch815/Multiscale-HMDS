@@ -1,0 +1,11 @@
+Parameters to reproduce Fig 2d, 1b and 1d
+
+Figure 2d: mammal tree
+python Multiscale_hmds.py DistMat_mammalwords.txt cls_0.4 60 2 1 300 1 1 0 10 0
+
+Figure 1b: scaling of computing time versus dataset size
+scaling of computing time versus dataset size = 200, 300, 400, ... 2700
+python Multiscale_hmds.py DistMat_Paul_PCA100_200.txt cls_0.4 20 3 1 3000 0 1 0 10 0
+
+Figure 1d: Benchmark with previous HMDS
+python Multiscale_hmds.py FeatMat_Paul_PCA100.txt cls_0.6 30 3 3 400 1 1 1 10 0

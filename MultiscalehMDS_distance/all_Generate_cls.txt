@@ -1,0 +1,11 @@
+Parameters to reproduce Fig 2d, 1b and 1d
+
+Figure 2d: mammal tree
+python Generate_cls.py DistMat_mammalwords.txt 0.4
+
+Figure 1b: scaling of computing time versus dataset size
+python Generate_cls.py DistMat_Paul_PCA100_200.txt 0.4
+
+Figure 1d: Benchmark with previous HMDS
+python Generate_cls.py FeatMat_Paul_PCA100.txt 0.6
+
