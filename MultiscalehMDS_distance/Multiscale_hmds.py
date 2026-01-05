@@ -4,6 +4,7 @@ Perform Multiscale HMDS with distance matrix input
 import numpy as np
 
 import sys, socket, time
+import argparse
 
 import pandas as pd
 
@@ -99,12 +100,9 @@ def split_too_large(labels,uniq_labels,lenlist,minres,maxcls,dmat):
 
 def keep_outliers(dmat_norm, indlist,outlier_nn):
     outliermats,outlier_nn_inds = [],[]
-    # a list of outlier index
     outliers = np.delete(np.arange(len(dmat_norm)),indlist)
-    # for each outlier, find its nn, which must be in the indlist
-    # keep a list of mutual distance mats and a list of nn index in the NEW dmat
-    for outlier_ in outliers: # index of outliers
-        # it must be a index in indlist
+    
+    for outlier_ in outliers:
         temp = np.argsort(dmat_norm[outlier_])[1:]
         count = 0
         keep = []
@@ -119,8 +117,7 @@ def keep_outliers(dmat_norm, indlist,outlier_nn):
         
         outliermats.append(np.array(mutualmat))
         outlier_nn_inds.append(np.array(keep))
-    # mutual dmat: Ntobeembed*Noutlier
-    # selfdmat: Noutlier*Noutlier
+    
     selfdmat = dmat_norm[np.ix_(outliers,outliers)]
     mutualdmat = dmat_norm[np.ix_(indlist,outliers)]
     indlist = np.concatenate([indlist,outliers])
@@ -128,16 +125,17 @@ def keep_outliers(dmat_norm, indlist,outlier_nn):
 
 # re-order, filter and re-divide the dmat
 def preprocess_dmat(dmat,clusterlist,mincls,maxcls,minres,targetfdname,filename,map_outlier_flag,outlier_nn):
-    '''
-    given dmat and a list of clusters:
-        re-divide if too large cluster, 
-        filter
-        e-order based on layers
-    '''
+    """
+    Preprocess distance matrix by re-dividing large clusters, filtering outliers, and reordering.
+    
+    Operations:
+    - Re-divide clusters exceeding maximum size
+    - Filter clusters below minimum size
+    - Reorder samples by hierarchical cluster membership
+    """
     newdmat = None
     
     dmat_norm = dmat/np.max(dmat)*2.0
-    # print statistics of each layer
     uniq_labels_0 = np.unique(clusterlist[0])
     lenlist = np.array([len(np.where(clusterlist[0]==x)[0]) 
                     for x in uniq_labels_0])
@@ -190,12 +188,8 @@ def preprocess_dmat(dmat,clusterlist,mincls,maxcls,minres,targetfdname,filename,
         maxunitsize.append(max(lenlist_))
         nunit.append(len(lenlist_))
 
-    # if we want to keep outliers
-    
     outliermats,outlier_nn_inds,mutualdmat, selfdmat = None, None, None, None
     if map_outlier_flag == 1:
-        # keep a list of outlier to its nns
-        
         outliermats,outlier_nn_inds,indlist,mutualdmat, selfdmat= keep_outliers(dmat_norm, indlist,outlier_nn)
     
     if not os.path.exists(targetfdname):
@@ -218,7 +212,7 @@ def averaging_dmats(newdmat,newcluster):
     return avedmats, time.time()-time_
 
 # embedding by different layers
-def layered_embedding(newdmat,newcluster,avedmats,Nn,Nd,correction=0,verbose=False):
+def layered_embedding(newdmat,newcluster,avedmats,Nn,Nd,verbose=False):
 
     embtimes = []
     embmats = []
@@ -236,7 +230,7 @@ def layered_embedding(newdmat,newcluster,avedmats,Nn,Nd,correction=0,verbose=Fal
         alllocs = lhmds.LargeScaleEmb(list(dict.fromkeys(newcluster[-i])),
                         avedmats[-i-1],
                         get_sublabels(newcluster[-i],newcluster[-i-1]),
-                        hyp_emb,avedmats[-i],Nn=Nn[-i],correction=correction,verbose=verbose)
+                        hyp_emb,avedmats[-i],Nn=Nn[-i],verbose=verbose)
         hyp_emb = {'pcoords':alllocs,'euc':emb.poin2euc(alllocs),
                      'lambda':hyp_emb['lambda']}
         embtimes.append(time.time() - time_)
@@ -247,7 +241,7 @@ def layered_embedding(newdmat,newcluster,avedmats,Nn,Nd,correction=0,verbose=Fal
     time_ = time.time()
     alllocs = lhmds.LargeScaleEmb(list(dict.fromkeys(newcluster[0])),
                                   newdmat,newcluster[0],
-                                  hyp_emb,avedmats[0],Nn=Nn[0],correction=correction,verbose=verbose)
+                                  hyp_emb,avedmats[0],Nn=Nn[0],verbose=verbose)
     embtimes.append(time.time() - time_)
     embmats.append(emb.get_dmat_poin(alllocs)/hyp_emb['lambda'])
     embcoords.append(alllocs)
@@ -356,35 +350,59 @@ def saveembmats(embmats,fullcoords,targetfdname,clusterlistname):
 ########################################################
 
 if __name__ == "__main__":
-    t = time.time() # Count the time of running
+    t = time.time()
     
-    #first argument is python filename
-    print("the name of the program:", sys.argv[0])
-    print("----------------------------------------------------\n")
+    parser = argparse.ArgumentParser(
+        description='Perform Multiscale Hyperbolic MDS with distance matrix input',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Example usage:
+  python Multiscale_hmds.py --distmat DistMat_ToggleSwitch.txt --clusters cls_0.2_0.6 \
+         --neighbors 20,10 --dimension 3 --min-cluster-size 4 --max-cluster-size 40 \
+         --save-matrix --compute-metrics --map-outlier --outlier-neighbors 10
+        '''
+    )
     
-    if len(sys.argv) < (1+11):
-        print('  [Error] No input argument provided. Program ended!\n')
-        exit()
-
-    #set global parameters and load distance matrix
+    parser.add_argument('--distmat', type=str, required=True,
+                        help='Distance/feature matrix filename (e.g., DistMat_ToggleSwitch.txt)')
+    parser.add_argument('--clusters', type=str, required=True,
+                        help='Cluster assignment filename (e.g., cls_0.2_0.6)')
+    parser.add_argument('--neighbors', type=str, required=True,
+                        help='Number of neighbors for each layer, comma-separated (e.g., 20,10)')
+    parser.add_argument('--dimension', type=int, required=True,
+                        help='Number of embedding dimensions (e.g., 2 or 3)')
+    parser.add_argument('--min-cluster-size', type=int, required=True,
+                        help='Minimum cluster size for filtering outliers')
+    parser.add_argument('--max-cluster-size', type=int, required=True,
+                        help='Maximum cluster size before re-dividing')
+    parser.add_argument('--save-matrix', action='store_true',
+                        help='Save embedding coordinate matrices')
+    parser.add_argument('--compute-metrics', action='store_true',
+                        help='Compute quality metrics (may be slow for large datasets)')
+    parser.add_argument('--map-outlier', action='store_true',
+                        help='Map outliers to embedding space')
+    parser.add_argument('--outlier-neighbors', type=int, required=True,
+                        help='Number of neighbors for outlier mapping')
     
-    dmatname = str(sys.argv[1].split('.')[0])
-    clusterlistname = str(sys.argv[2])
+    args = parser.parse_args()
+    
+    dmatname = str(args.distmat.split('.')[0])
+    clusterlistname = str(args.clusters)
     datafdname = '../data/%s/'%(dmatname)
     targetfdname = './test/%s/'%(dmatname)
     
     if dmatname.split('_')[0].lower() == 'featmat':
-         featmat = np.loadtxt(datafdname+str(sys.argv[1]),dtype = float)
+         featmat = np.loadtxt(datafdname+args.distmat, dtype=float)
          dmat = emb.get_dmat_euc(featmat)
     elif dmatname.split('_')[0].lower() == 'distmat':
-         dmat  = np.loadtxt(datafdname+str(sys.argv[1]),dtype = float)
+         dmat  = np.loadtxt(datafdname+args.distmat, dtype=float)
     
-    clusterlist  = np.loadtxt(datafdname+str(sys.argv[2]),dtype = int).reshape(-1,len(dmat))
-    Nn = [int(n) for n in str(sys.argv[3]).split(',')]
-    Nd = int(sys.argv[4])
-    mincls = int(sys.argv[5])
-    maxcls = int(sys.argv[6])
-    savematflag = int(sys.argv[7])
+    clusterlist  = np.loadtxt(datafdname+args.clusters, dtype=int).reshape(-1,len(dmat))
+    Nn = [int(n) for n in args.neighbors.split(',')]
+    Nd = args.dimension
+    mincls = args.min_cluster_size
+    maxcls = args.max_cluster_size
+    savematflag = 1 if args.save_matrix else 0
     
     '''
     if compute metrics or not 
@@ -392,7 +410,7 @@ if __name__ == "__main__":
     and embeded feat mat, therefore would take long when the dataset 
     is large (>10,000 samples)
     '''
-    comp_metr_flag = int(sys.argv[8]) 
+    comp_metr_flag = 1 if args.compute_metrics else 0
     if len(dmat)>5000 and comp_metr_flag == 1:
         print("Warning: Computing metrics might take long for large datasets with n = %i"%len(dmat))
     
@@ -400,18 +418,16 @@ if __name__ == "__main__":
     '''
     map outlier or not
     '''
-    map_outlier_flag = int(sys.argv[9])
-    outlier_nn = int(sys.argv[10])
+    map_outlier_flag = 1 if args.map_outlier else 0
+    outlier_nn = args.outlier_neighbors
 
     if mincls == 1:
         map_outlier_flag = 0
     
-    # additional argument on inter-layer correction, default 0
-    correction = int(sys.argv[11]) 
     
-    minres = float(str(sys.argv[2]).split('_')[1])
+    minres = float(args.clusters.split('_')[1])
     
-    filename = clusterlistname+'_Nn_'+str(sys.argv[3])+'_Nd_'+sys.argv[4]+'_min_'+sys.argv[5]+'_max_'+sys.argv[6]+'_corr_'+sys.argv[11]
+    filename = clusterlistname+'_Nn_'+args.neighbors+'_Nd_'+str(args.dimension)+'_min_'+str(args.min_cluster_size)+'_max_'+str(args.max_cluster_size)
     
     # re-order, filter and re-divide the clusters, normalize the dmat after those steps
     '''
@@ -427,7 +443,7 @@ if __name__ == "__main__":
 
     # # embedding by different layers
     embcoords, embmats, curvature, embtimes = layered_embedding(newdmat,
-                newcluster,avedmats,Nn,Nd,correction=correction,verbose=False)
+                newcluster,avedmats,Nn,Nd,verbose=False)
     
     fullcoords, fullembmat, maptime = None, None, 0.0
     # map outlier or not

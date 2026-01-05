@@ -70,9 +70,7 @@ def aveone(dmat,currinds):
     avedmat = np.zeros((len(left)+1,len(left)+1))
     
     m1 = np.ix_(np.arange(currinds[0]),np.arange(currinds[0]))
-#     print(m1)
     m2 = np.ix_(np.arange(currinds[-1]+1,len(dmat)),np.arange(currinds[-1]+1,len(dmat)))
-#     print(m2,len(m2[0]))
     mcross = np.ix_(np.arange(currinds[0]),np.arange(currinds[-1]+1,len(dmat)))
     
     avedmat[m1] = dmat[m1]
@@ -108,7 +106,7 @@ def embed_clusters(dmat,D):
     ltz_model = stan.CmdStanModel(stan_file=cpath+'/lorentz2.stan')
     data={'N':dmat.shape[0], 'D':D, 'deltaij':dmat}
     model = ltz_model.optimize(data=data, iter=500000, algorithm='LBFGS', 
-                                   # tol_rel_grad=1e2, 
+                                   #tol_rel_grad=1e2, 
                                    show_console=True, refresh=5000)
     
     hyp_emb = {'euc':model.euc, 'sig':model.sig, 'lambda':model.stan_variable('lambda')}
@@ -145,7 +143,7 @@ def relax(prevfit, dmat_mutual, dmat_local, init_pos):
                    'euc_emb':prevfit['euc'], 'deltaij_mutual':dmat_mutual,'deltaij':dmat_local}
     
     model = relax_model.optimize(data=data, iter=500000, algorithm='LBFGS', inits = init,
-                               # tol_rel_grad=1e2, 
+                               #tol_rel_grad=1e2, 
                                show_console=False, refresh=5000)
     hyp_emb = {'euc':model.euc_new, 'sig':np.ones((len(model.euc_new),)), 'lambda':prevfit['lambda']}
     emb.process_sim(hyp_emb)
@@ -200,7 +198,7 @@ def get_nn_dmat(dmat, avemat, labels, i, N, labellist, mode):
 """
 directly relax with mds initialization
 """
-def LargeScaleEmb(clusterlist_f,dmat,labels,cluster_emb,avemat,Nn,correction=0,
+def LargeScaleEmb(clusterlist_f,dmat,labels,cluster_emb,avemat,Nn,
                   verbose=False, mode = 'dmat'):
     alllocs = []
     start_time = time.time()
@@ -239,57 +237,6 @@ def LargeScaleEmb(clusterlist_f,dmat,labels,cluster_emb,avemat,Nn,correction=0,
             print(time.time()-start_time)
     alllocs = np.concatenate(alllocs)
     
-    # inter cluster correction
-    if correction == 1:
-        # Nn_corr = Nn*2
-        print('\n\n\n Performing inter-cluster-correction \n\n\n')
-
-        # ordered from clusters with higher variance
-
-        indlist = [np.where(labels==l)[0] for l in clusterlist_f]
-        if mode == 'dmat':
-            varlist = [np.var(dmat[np.ix_(ind_, ind_)].flatten()) for ind_ in indlist]
-        elif mode == 'featmat':
-            varlist = [np.var(emb.get_dmat_euc(dmat[ind_]).flatten()) for ind_ in indlist]
-        i_ord = np.argsort(varlist)[::-1]
-
-        for i in i_ord:
-            l = clusterlist_f[i]
-            ind_ = np.where(labels==l)[0]
-            Nn_corr = Nn
-            if mode == 'dmat':
-                localmat = dmat[np.ix_(ind_,ind_)]
-            elif mode == 'featmat':
-                localmat = emb.get_dmat_euc(dmat[ind_])
-
-            if len(ind_) > 1:
-                others = np.delete(np.arange(len(dmat)),ind_)
-                if mode == 'dmat':
-                    nns = others[np.argsort(np.mean(dmat[np.ix_(ind_,others)],axis=0))[:Nn_corr]]
-                    dmat_mutual = dmat[np.ix_(ind_,nns)]
-
-                elif mode == 'featmat':
-                    nns = others[np.argsort(np.mean(np.array([np.linalg.norm(dmat[others]-dmat[ii],axis=1) 
-                                      for ii in ind_]),axis=0))[:Nn_corr]]
-                    dmat_mutual = np.array([np.linalg.norm(dmat[nns]-dmat[ii],axis=1) 
-                                            for ii in ind_])
-
-                Nn_cls_corr = Nn//2
-                dmat_cls = get_nn_dmat(dmat,avemat,labels,i,Nn_cls_corr,clusterlist_f, mode)
-                nnind = np.argsort(avemat[i])[0:Nn_cls_corr+1]
-                
-                dmat_mutual = np.concatenate([dmat_mutual,dmat_cls],axis=1)
-
-                # prevfit with only the NNs
-
-                prevfit = {'euc':np.concatenate([emb.poin2euc(alllocs[nns]),cluster_emb['euc'][nnind]],axis=0),
-                'lambda':cluster_emb['lambda']}
-            
-                # relax
-                relaxed = relax(prevfit, dmat_mutual, localmat, emb.poin2euc(alllocs[ind_]))
-                
-                # update
-                alllocs[ind_] = relaxed['pcoords']
     print('finished. Computing time: %.2f'%(time.time()-start_time))
     return alllocs
 
@@ -313,7 +260,7 @@ def transform_new_point(euccoords,mutualmat,curvature):
                    'deltaij_mutual':mutualmat,'deltaij':[[0]]}
     
     model = transform_model.optimize(data=data, iter=500000, algorithm='LBFGS', inits = init,
-                               # tol_rel_grad=1e2, 
+                               #tol_rel_grad=1e2, 
                                show_console=False, refresh=5000)
     hyp_emb = {'euc':model.euc_new, 'sig':model.sig_n, 'lambda':curvature}
     emb.process_sim(hyp_emb)

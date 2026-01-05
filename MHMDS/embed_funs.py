@@ -21,7 +21,6 @@ def get_dmat_euc(coords):
     N = coords.shape[0]
     dists = np.zeros((N,N))
     for i in np.arange(N):
-         # if i%100 == 0: print(i)
          dists[i] = np.linalg.norm(coords - coords[i],axis=1)
     return dists
 
@@ -32,7 +31,6 @@ def get_dmat_poin(coords):
     dists = np.zeros((N,N))
     norms = np.linalg.norm(coords,axis=1)**2
     for i in np.arange(N):
-         # if i%100 == 0: print(i)
          diff = np.linalg.norm(coords - coords[i],axis=1)**2
          dists[i] = np.arccosh(2.0*(diff/(1.0-norms[i])/(1-norms))+1.0)
     return dists
@@ -44,7 +42,6 @@ def get_dmat_poin_mutual(coords1,coords2):
     norms1 = np.linalg.norm(coords1,axis=1)**2
     norms2 = np.linalg.norm(coords2,axis=1)**2
     for i in np.arange(N1):
-         # if i%100 == 0: print(i)
          diff = np.linalg.norm(coords2 - coords1[i],axis=1)**2
          dists[i] = np.arccosh(2.0*(diff/(1.0-norms1[i])/(1-norms2))+1.0)
     return dists

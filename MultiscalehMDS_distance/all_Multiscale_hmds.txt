@@ -1,11 +1,15 @@
 Parameters to reproduce Fig 2d, 1b and 1d
 
 Figure 2d: mammal tree
-python Multiscale_hmds.py DistMat_mammalwords.txt cls_0.4 60 2 1 300 1 1 0 10 0
+python Multiscale_hmds.py --distmat DistMat_mammalwords.txt --clusters cls_0.4 --neighbors 60 --dimension 2 --min-cluster-size 1 --max-cluster-size 300 --save-matrix --compute-metrics --outlier-neighbors 10
+python Multiscale_hmds.py --distmat DistMat_bio-diseasome.txt --clusters cls_0.4 --neighbors 60 --dimension 2 --min-cluster-size 1 --max-cluster-size 300 --save-matrix --compute-metrics --outlier-neighbors 10
+python Multiscale_hmds.py --distmat DistMat_ca-CSphd.txt --clusters cls_0.4 --neighbors 60 --dimension 2 --min-cluster-size 1 --max-cluster-size 300 --save-matrix --compute-metrics --outlier-neighbors 10
+python Multiscale_hmds.py --distmat DistMat_phylo-tree.txt --clusters cls_0.2 --neighbors 20 --dimension 2 --min-cluster-size 1 --max-cluster-size 300 --save-matrix --compute-metrics --outlier-neighbors 10
+python Multiscale_hmds.py --distmat DistMat_smalltree.txt --clusters cls_0.3 --neighbors 20 --dimension 2 --min-cluster-size 1 --max-cluster-size 300 --save-matrix --compute-metrics --outlier-neighbors 10
 
 Figure 1b: scaling of computing time versus dataset size
 scaling of computing time versus dataset size = 200, 300, 400, ... 2700
-python Multiscale_hmds.py DistMat_Paul_PCA100_200.txt cls_0.4 20 3 1 3000 0 1 0 10 0
+python Multiscale_hmds.py --distmat DistMat_Paul_PCA100_200.txt --clusters cls_0.4 --neighbors 20 --dimension 3 --min-cluster-size 1 --max-cluster-size 3000 --compute-metrics --outlier-neighbors 10
 
 Figure 1d: Benchmark with previous HMDS
-python Multiscale_hmds.py FeatMat_Paul_PCA100.txt cls_0.6 30 3 3 400 1 1 1 10 0
+python Multiscale_hmds.py --distmat FeatMat_Paul_PCA100.txt --clusters cls_0.6 --neighbors 30 --dimension 3 --min-cluster-size 3 --max-cluster-size 400 --save-matrix --compute-metrics --map-outlier --outlier-neighbors 10

@@ -38,7 +38,7 @@ def dimension_reduction(featmat,nd):
 
 
 if __name__ == "__main__":
-   t = time.time() # Count the time of running
+   t = time.time() 
    
    #first argument is python filename
    print("the name of the program:", sys.argv[0])

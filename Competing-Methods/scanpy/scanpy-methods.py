@@ -50,8 +50,6 @@ def dimension_reduction(featmat,nns,nd,dmatname):
             mat_emb = emb.get_dmat_euc(adata.obsm[name])
             np.savetxt('./test/%s_%s_nn_%i_nd_%i.txt'%(method,dmatname,nns,nd),adata.obsm[name])
         print(method)
-    #     plt.figure()
-    #     plt.scatter(dmat_toemb.flatten(),mat_emb.flatten())
         Qlocal, Qglobal, _  = qms.get_quality_metrics(dmat_toemb,mat_emb,verbose=True)
         Qlocals.append(Qlocal)
         Qglobals.append(Qglobal)

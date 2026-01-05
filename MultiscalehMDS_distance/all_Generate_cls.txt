@@ -1,11 +1,15 @@
 Parameters to reproduce Fig 2d, 1b and 1d
 
 Figure 2d: mammal tree
-python Generate_cls.py DistMat_mammalwords.txt 0.4
+python Generate_cls.py --distmat DistMat_mammalwords.txt --thresholds 0.4
+python Generate_cls.py --distmat DistMat_bio-diseasome.txt --thresholds 0.4
+python Generate_cls.py --distmat DistMat_ca-CSphd.txt --thresholds 0.4
+python Generate_cls.py --distmat DistMat_phylo-tree.txt --thresholds 0.2
+python Generate_cls.py --distmat DistMat_smalltree.txt --thresholds 0.3
 
 Figure 1b: scaling of computing time versus dataset size
-python Generate_cls.py DistMat_Paul_PCA100_200.txt 0.4
+python Generate_cls.py --distmat DistMat_Paul_PCA100_200.txt --thresholds 0.4
 
 Figure 1d: Benchmark with previous HMDS
-python Generate_cls.py FeatMat_Paul_PCA100.txt 0.6
+python Generate_cls.py --distmat FeatMat_Paul_PCA100.txt --thresholds 0.6
 

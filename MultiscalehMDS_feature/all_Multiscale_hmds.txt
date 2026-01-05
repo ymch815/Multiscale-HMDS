@@ -4,52 +4,52 @@ Figure 2 and Figure 5b, testing different parameter settings, different number o
 Experiment 1: only one layer, effect of cluster number/size and n neighbors. 
 x = 25, 50, 100, 150, 200, 300, 400, 500
 y = 10, 20, 40, 60
-python Multiscale_hmds.py FeatMat_Paul_PCA100.txt cls_[x] [y] 3 1 3000 0 1 0 10 0
+python Multiscale_hmds.py --featmat FeatMat_Paul_PCA100.txt --clusters cls_[x] --neighbors [y] --dimension 3 --min-cluster-size 1 --max-cluster-size 3000 --compute-metrics --outlier-neighbors 10
 50 repetitions for each parameter set
 
 Experiment 2: effect of dimensions, only one layer
 n = 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20
-python Multiscale_hmds.py FeatMat_Paul_PCA100.txt cls_100 20 [n] 1 3000 0 1 0 10 0
+python Multiscale_hmds.py --featmat FeatMat_Paul_PCA100.txt --clusters cls_100 --neighbors 20 --dimension [n] --min-cluster-size 1 --max-cluster-size 3000 --compute-metrics --outlier-neighbors 10
 50 repetitions for each parameter set
 
 Figure 5b
 Experiment 3-2: two layers, varying number of the larger layer (cluster of clusters)
 x = 25, 50, 100, 150, 200, 300, nn = 20, 10
-python Multiscale_hmds.py FeatMat_Paul_PCA100.txt cls_500_[x] 20,10 3 1 3000 0 1 0 10 0
+python Multiscale_hmds.py --featmat FeatMat_Paul_PCA100.txt --clusters cls_500_[x] --neighbors 20,10 --dimension 3 --min-cluster-size 1 --max-cluster-size 3000 --compute-metrics --outlier-neighbors 10
 50 repetitions for each parameter set
 
 Experiment 3-3: three layers, varying number of two of the layers
 x = 50, 100, 150, 200, 300
-python Multiscale_hmds.py FeatMat_Paul_PCA100.txt cls_500_[x]_25 20,10,10 3 1 3000 0 1 0 10 0
+python Multiscale_hmds.py --featmat FeatMat_Paul_PCA100.txt --clusters cls_500_[x]_25 --neighbors 20,10,10 --dimension 3 --min-cluster-size 1 --max-cluster-size 3000 --compute-metrics --outlier-neighbors 10
 50 repetitions for each parameter set
 y = 50, 100, 150, 200
-python Multiscale_hmds.py FeatMat_Paul_PCA100.txt cls_500_300_[y] 20,10,10 3 1 3000 0 1 0 10 0
+python Multiscale_hmds.py --featmat FeatMat_Paul_PCA100.txt --clusters cls_500_300_[y] --neighbors 20,10,10 --dimension 3 --min-cluster-size 1 --max-cluster-size 3000 --compute-metrics --outlier-neighbors 10
 50 repetitions for each parameter set
 
 Experiment 4: effect of re-dividing clusters
 nmax = 50, 100, 200, 300, 400, 3000
-python Multiscale_hmds.py FeatMat_Paul_PCA100.txt cls_25 20 3 1 [nmax] 0 1 0 10 0
+python Multiscale_hmds.py --featmat FeatMat_Paul_PCA100.txt --clusters cls_25 --neighbors 20 --dimension 3 --min-cluster-size 1 --max-cluster-size [nmax] --compute-metrics --outlier-neighbors 10
 50 repetitions for each parameter set
 
 Figure 3: Benchmark datasets
-python Multiscale_hmds.py FeatMat_Celegans_10k_PCA100.txt cls_300 20 2 3 500 1 1 1 10 0
-python Multiscale_hmds.py FeatMat_Celegans_10k_PCA100.txt cls_300 30 3 3 500 1 1 1 10 0
-python Multiscale_hmds.py FeatMat_Celegans_40k_PCA100.txt cls_200 30 2 3 500 1 1 1 10 0
-python Multiscale_hmds.py FeatMat_Celegans_40k_PCA100.txt cls_200 30 3 3 500 1 1 1 10 0
-python Multiscale_hmds.py FeatMat_Krumsiek11.txt cls_50 20 2 1 400 1 1 0 10 0
-python Multiscale_hmds.py FeatMat_Krumsiek11.txt cls_50 10 3 1 400 1 1 0 10 0
-python Multiscale_hmds.py FeatMat_Olsson_PCA100.txt cls_40 30 2 1 400 1 1 0 10 0
-python Multiscale_hmds.py FeatMat_Olsson_PCA100.txt cls_40 20 3 1 400 1 1 0 10 0
-python Multiscale_hmds.py FeatMat_Paul_PCA100.txt cls_100 20 2 3 400 1 1 1 10 0
-python Multiscale_hmds.py FeatMat_Paul_PCA100.txt cls_100 20 3 3 400 1 1 1 10 0
-python Multiscale_hmds.py FeatMat_ToggleSwitch.txt cls_20 10 2 1 400 1 1 0 10 0
+python Multiscale_hmds.py --featmat FeatMat_Celegans_10k_PCA100.txt --clusters cls_300 --neighbors 20 --dimension 2 --min-cluster-size 3 --max-cluster-size 500 --save-matrix --compute-metrics --map-outlier --outlier-neighbors 10
+python Multiscale_hmds.py --featmat FeatMat_Celegans_10k_PCA100.txt --clusters cls_300 --neighbors 30 --dimension 3 --min-cluster-size 3 --max-cluster-size 500 --save-matrix --compute-metrics --map-outlier --outlier-neighbors 10
+python Multiscale_hmds.py --featmat FeatMat_Celegans_40k_PCA100.txt --clusters cls_200 --neighbors 30 --dimension 2 --min-cluster-size 3 --max-cluster-size 500 --save-matrix --compute-metrics --map-outlier --outlier-neighbors 10
+python Multiscale_hmds.py --featmat FeatMat_Celegans_40k_PCA100.txt --clusters cls_200 --neighbors 30 --dimension 3 --min-cluster-size 3 --max-cluster-size 500 --save-matrix --compute-metrics --map-outlier --outlier-neighbors 10
+python Multiscale_hmds.py --featmat FeatMat_Krumsiek11.txt --clusters cls_50 --neighbors 20 --dimension 2 --min-cluster-size 1 --max-cluster-size 400 --save-matrix --compute-metrics --outlier-neighbors 10
+python Multiscale_hmds.py --featmat FeatMat_Krumsiek11.txt --clusters cls_50 --neighbors 10 --dimension 3 --min-cluster-size 1 --max-cluster-size 400 --save-matrix --compute-metrics --outlier-neighbors 10
+python Multiscale_hmds.py --featmat FeatMat_Olsson_PCA100.txt --clusters cls_40 --neighbors 30 --dimension 2 --min-cluster-size 1 --max-cluster-size 400 --save-matrix --compute-metrics --outlier-neighbors 10
+python Multiscale_hmds.py --featmat FeatMat_Olsson_PCA100.txt --clusters cls_40 --neighbors 20 --dimension 3 --min-cluster-size 1 --max-cluster-size 400 --save-matrix --compute-metrics --outlier-neighbors 10
+python Multiscale_hmds.py --featmat FeatMat_Paul_PCA100.txt --clusters cls_100 --neighbors 20 --dimension 2 --min-cluster-size 3 --max-cluster-size 400 --save-matrix --compute-metrics --map-outlier --outlier-neighbors 10
+python Multiscale_hmds.py --featmat FeatMat_Paul_PCA100.txt --clusters cls_100 --neighbors 20 --dimension 3 --min-cluster-size 3 --max-cluster-size 400 --save-matrix --compute-metrics --map-outlier --outlier-neighbors 10
+python Multiscale_hmds.py --featmat FeatMat_ToggleSwitch.txt --clusters cls_20 --neighbors 10 --dimension 2 --min-cluster-size 1 --max-cluster-size 400 --save-matrix --compute-metrics --outlier-neighbors 10
 
 Figure 4: ABpxp lineage
-python Multiscale_hmds.py FeatMat_Celegans_PCA50_lineage_ABpxp.txt cls_50 20 7 3 400 1 1 1 10 0
+python Multiscale_hmds.py --featmat FeatMat_Celegans_PCA50_lineage_ABpxp.txt --clusters cls_50 --neighbors 20 --dimension 7 --min-cluster-size 3 --max-cluster-size 400 --save-matrix --compute-metrics --map-outlier --outlier-neighbors 10
 
 
 Figure 5c/d: 80k C elegans using multilayer
-python Multiscale_hmds.py FeatMat_Celegans_PCA100.txt cls_800_100 30,10 3 3 400 1 0 1 10 0
+python Multiscale_hmds.py --featmat FeatMat_Celegans_PCA100.txt --clusters cls_800_100 --neighbors 30,10 --dimension 3 --min-cluster-size 3 --max-cluster-size 400 --save-matrix --map-outlier --outlier-neighbors 10
 
 
 

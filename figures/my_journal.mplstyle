@@ -1,0 +1,36 @@
+# my_journal.mplstyle
+
+
+# Fonts
+font.family: Arial
+font.size: 9
+
+# Axes
+axes.linewidth: 1.0
+axes.edgecolor: black
+axes.labelsize: 9
+axes.titlesize: 9
+axes.grid: False
+
+# Ticks
+xtick.direction: out
+ytick.direction: out
+xtick.major.size: 3
+ytick.major.size: 3
+xtick.labelsize: 10
+ytick.labelsize: 10
+
+# Legend
+legend.frameon: False
+legend.fontsize: 10
+legend.handlelength: 2.0
+
+# DPI and figure saving
+savefig.dpi: 300
+savefig.bbox: tight
+svg.fonttype: none
+
+# Colormap
+image.cmap: viridis
+
+

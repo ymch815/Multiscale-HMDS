@@ -12,6 +12,7 @@
 import numpy as np
 
 import sys, socket, time
+import argparse
 
 import random
 
@@ -49,32 +50,34 @@ def savecls(cluster_list,datafdname,res):
 
 
 if __name__ == "__main__":
-   t = time.time() # Count the time of running
+   t = time.time()
    
-   #first argument is python filename
-   print("the name of the program:", sys.argv[0])
-   print("----------------------------------------------------\n")
-
-   if len(sys.argv) < (1+2):
-      print('  [Error] No input argument provided. Program ended!\n')
-      exit()
-
-   #set global parameters and load distance matrix
+   parser = argparse.ArgumentParser(
+       description='Generate hierarchical cluster assignments using K-means on feature matrix',
+       formatter_class=argparse.RawDescriptionHelpFormatter,
+       epilog='''
+Example usage:
+  python Generate_cls.py --featmat FeatMat_ToggleSwitch.txt --n-clusters 20,7
+       '''
+   )
    
-   featmatname = str(sys.argv[1].split('.')[0])
+   parser.add_argument('--featmat', type=str, required=True,
+                       help='Feature matrix filename (e.g., FeatMat_ToggleSwitch.txt)')
+   parser.add_argument('--n-clusters', type=str, required=True,
+                       help='Number of clusters for each layer, comma-separated (e.g., 20,7)')
+   
+   args = parser.parse_args()
+   
+   featmatname = str(args.featmat.split('.')[0])
    datafdname = '../data/%s/'%(featmatname)
 
    if featmatname.split('_')[0].lower() == 'featmat':
-        featmat = np.loadtxt(datafdname+str(sys.argv[1]),dtype = float)
+        featmat = np.loadtxt(datafdname+args.featmat, dtype=float)
    else: 
        print('  [Error] Must provide feature matrix. Program ended!\n')
        exit()
    
-   '''
-   In this case, we need the number of clusters in each layer
-   Then we need a function to "group" the clusters into higher levels
-   '''
-   ncls = [int(n) for n in sys.argv[2].split(',')]
+   ncls = [int(n) for n in args.n_clusters.split(',')]
 
    cluster_list = generate_cls(featmat,ncls)
    

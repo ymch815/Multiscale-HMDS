@@ -32,9 +32,16 @@ install_cmdstan(overwrite = True)
 ```
 ### Example use
 Perform Multiscale H-MDS on the Toggle Switch dataset onto 3-d hyperbolic space
-```
+```bash
 cd MultiscalehMDS_feature
-python Multiscale_hmds.py FeatMat_ToggleSwitch.txt cls_20 10 3 1 200 1 1 1 10 0
+python Multiscale_hmds.py --featmat FeatMat_ToggleSwitch.txt --clusters cls_20 \
+       --neighbors 10 --dimension 3 --min-cluster-size 1 --max-cluster-size 200 \
+       --save-matrix --compute-metrics --map-outlier --outlier-neighbors 10
+```
+
+To see all available options:
+```bash
+python Multiscale_hmds.py -h
 ```
 
 ## Usage
@@ -49,28 +56,50 @@ We recommend using the feature matrix, since it is computationally more efficien
 
 Generate_cls.py performs clustering on the dataset. 
 
-* In MultiscalehMDS_feature
+* In MultiscalehMDS_feature (K-means clustering)
+```bash
+python Generate_cls.py --featmat FeatMat_ToggleSwitch.txt --n-clusters 20,7
 ```
-python Generate_cls.py FeatMat_ToggleSwitch.txt 20,7  
+
+* In MultiscalehMDS_distance (Agglomerative clustering)
+```bash
+python Generate_cls.py --distmat DistMat_ToggleSwitch.txt --thresholds 0.2,0.6
 ```
-* In MultiscalehMDS_distance
-```
-python Generate_cls.py DistMat_ToggleSwitch.txt 0.2,0.6
+
+To see all available options:
+```bash
+python Generate_cls.py -h
 ```
 
 ### Embedding
 After getting cluster assignment, Multiscale_hmds.py performs embedding. 
 
 * In MultiscalehMDS_feature
-```
-python Multiscale_hmds.py FeatMat_ToggleSwitch.txt cls_20 10 3 1 200 1 1 1 10 0
-```
-* In MultiscalehMDS_distance
-```
-python Multiscale_hmds.py DistMat_ToggleSwitch.txt cls_0.2_0.6 20,10 3 4 40 1 1 1 10 0
+```bash
+python Multiscale_hmds.py --featmat FeatMat_ToggleSwitch.txt --clusters cls_20 \
+       --neighbors 10 --dimension 3 --min-cluster-size 1 --max-cluster-size 200 \
+       --save-matrix --compute-metrics --map-outlier --outlier-neighbors 10
 ```
 
-parameters: `name of dataset file` `name of cluster assignment file` `n neighbors` `n dimension` `min cluster size` `max cluster size` `save matrix or not` `compute metrics or not` `map outlier or not` `n neighbors for outlier` `correction`
+* In MultiscalehMDS_distance
+```bash
+python Multiscale_hmds.py --distmat DistMat_ToggleSwitch.txt --clusters cls_0.2_0.6 \
+       --neighbors 20,10 --dimension 3 --min-cluster-size 4 --max-cluster-size 40 \
+       --save-matrix --compute-metrics --map-outlier --outlier-neighbors 10
+```
+
+#### Parameters:
+- `--featmat` / `--distmat`: Name of dataset file (feature or distance matrix)
+- `--clusters`: Name of cluster assignment file
+- `--neighbors`: Number of neighbors for each layer (comma-separated for multiple layers)
+- `--dimension`: Number of embedding dimensions
+- `--min-cluster-size`: Minimum cluster size for filtering outliers
+- `--max-cluster-size`: Maximum cluster size before re-dividing
+- `--save-matrix`: Save embedding coordinate matrices (flag)
+- `--compute-metrics`: Compute quality metrics (flag)
+- `--map-outlier`: Map outliers to embedding space (flag)
+- `--outlier-neighbors`: Number of neighbors for outlier mapping
+- `--correction`: Enable inter-layer correction (flag)
 
 ### Outputs
 

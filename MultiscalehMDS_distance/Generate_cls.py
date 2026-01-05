@@ -13,6 +13,7 @@
 import numpy as np
 
 import sys, socket, time
+import argparse
 
 import random
 
@@ -48,28 +49,34 @@ input: dmat, resolution of clustering[list[float]]
 
 
 if __name__ == "__main__":
-   t = time.time() # Count the time of running
+   t = time.time()
    
-   #first argument is python filename
-   print("the name of the program:", sys.argv[0])
-   print("----------------------------------------------------\n")
-
-   if len(sys.argv) < (1+2):
-      print('  [Error] No input argument provided. Program ended!\n')
-      exit()
-
-   #set global parameters and load distance matrix
+   parser = argparse.ArgumentParser(
+       description='Generate hierarchical cluster assignments using Agglomerative Clustering',
+       formatter_class=argparse.RawDescriptionHelpFormatter,
+       epilog='''
+Example usage:
+  python Generate_cls.py --distmat DistMat_ToggleSwitch.txt --thresholds 0.2,0.6
+       '''
+   )
    
-   dmatname = str(sys.argv[1].split('.')[0])
+   parser.add_argument('--distmat', type=str, required=True,
+                       help='Distance or feature matrix filename (e.g., DistMat_ToggleSwitch.txt)')
+   parser.add_argument('--thresholds', type=str, required=True,
+                       help='Distance thresholds for each layer, comma-separated (e.g., 0.2,0.6). Values between 0 and 1')
+   
+   args = parser.parse_args()
+   
+   dmatname = str(args.distmat.split('.')[0])
    datafdname = '../data/%s/'%(dmatname)
 
    if dmatname.split('_')[0].lower() == 'featmat':
-        featmat = np.loadtxt(datafdname+str(sys.argv[1]),dtype = float)
+        featmat = np.loadtxt(datafdname+args.distmat, dtype=float)
         dmat = emb.get_dmat_euc(featmat)
    elif dmatname.split('_')[0].lower() == 'distmat':
-        dmat  = np.loadtxt(datafdname+str(sys.argv[1]),dtype = float)
+        dmat  = np.loadtxt(datafdname+args.distmat, dtype=float)
 
-   res = [float(n) for n in sys.argv[2].split(',')]
+   res = [float(n) for n in args.thresholds.split(',')]
    
    cluster_list = generate_cls(dmat,res)
    
