@@ -1,5 +1,7 @@
 # Multiscale-H-MDS
-An algorithm for performing hyperbolic MDS on large scale datasets
+An algorithm for performing hyperbolic MDS on large scale datasets.
+
+This file covers set up and quick start guide. See [Tutorial](docs/1-Overview.md) for more detailed guides. 
 
 ## Dependencies
 
@@ -15,9 +17,12 @@ An algorithm for performing hyperbolic MDS on large scale datasets
 ### Compile .stan files
 Stan files should be compiled before performing any embedding. 
 
-To ensure compiling of .stan files, we recommend install only cmdstanpy in a independent environment, and compile all .stan files. This only needs to be done once. After executable files have been compiled, it will be ready to perform optimization and there's no need to re-compile. 
+To ensure compiling of .stan files, we recommend install only cmdstanpy in a independent environment, and compile all .stan files. 
+**This only needs to be done once.** After executable files have been compiled, it will be ready to perform optimization and there's no need to re-compile. 
 
-To do so, 
+**Important check before first compiling**: Please make sure you only have .stan files in the directory, and remove executable files, .hpp files, etc. 
+ 
+To compile, 
 ```
 conda create -n stan-env -c conda-forge cmdstanpy
 conda activate stan-env 
@@ -94,18 +99,17 @@ python Multiscale_hmds.py --distmat DistMat_ToggleSwitch.txt --clusters cls_0.2_
 - `--neighbors`: Number of neighbors for each layer (comma-separated for multiple layers)
 - `--dimension`: Number of embedding dimensions
 - `--min-cluster-size`: Minimum cluster size for filtering outliers
-- `--max-cluster-size`: Maximum cluster size before re-dividing
+- `--max-cluster-size`: Maximum cluster size allowed. Large clusters will be re-divided
 - `--save-matrix`: Save embedding coordinate matrices (flag)
 - `--compute-metrics`: Compute quality metrics (flag)
 - `--map-outlier`: Map outliers to embedding space (flag)
 - `--outlier-neighbors`: Number of neighbors for outlier mapping
-- `--correction`: Enable inter-layer correction (flag)
 
 ### Outputs
 
-The program saved embedding coordinates for both cluster centroids and individual samples, if `save matrix or not == True`. 
+The program saved embedding coordinates for both cluster centroids and individual samples, if `--save-matrix == True`. 
 
-It also saved a list of index indicating the order of samples after filtering and re-ordering, and the **embedding coordinates comes in this order**. Note that if `min cluster size > 1` and `map outlier or not == False`, outliers are not embedded and `len(list of index)` will be smaller than the original sample size. 
+It also saved a list of index indicating the order of samples after filtering and re-ordering, and the **embedding coordinates comes in this order**. Note that if `--min-cluster-size > 1` and `--map-outlier == False`, outliers are not embedded and `len(list of index)` will be smaller than the original sample size. 
 
 
 ## Reproduce simulation results and figures
@@ -113,3 +117,9 @@ Code, data and embedding results required for all of the figures and supplementa
 
 Embedding results are provided in MultiscalehMDS_feature/result and MultiscalehMDS_distance/result. To reproduce them, please read the .txt files inside these directories which provided all parameters to reproduce the embeddings. 
 
+## Resources
+For more detailed tutorial, please refer to the following docs: 
+- **Algorithm intuition**: See [1-Overview.md](1-Overview.md) for conceptual background
+- **Example usage**: See [2-Example Usage.md](2-Example%20Usage.md) for hands-on tutorials
+- **Interactive examples**: Run [example-usage.ipynb](example-usage.ipynb) for working code for 2-Example Usage.md
+- **Parameter selection**:Review [3-Parameters](3-Parameters.md) for tuning advice

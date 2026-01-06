@@ -1,6 +1,6 @@
 # Parameter Selection Guide
 
-This guide provides detailed recommendations for tuning MHMDS parameters to optimize embedding quality and computational efficiency. For basic usage examples, see [Example Usage Guide](2-Example%20Usage.md).
+This guide provides detailed recommendations for tuning MuH-MDS parameters to optimize embedding quality and computational efficiency. For basic usage examples, see [Example Usage Guide](2-Example%20Usage.md).
 
 ## Quick Reference Tables
 
@@ -43,8 +43,7 @@ python Multiscale_hmds.py ... --save-matrix
 **Purpose**: Calculate embedding quality metrics (Qlocal, Qglobal, correlation).
 
 **Recommendation**: Include for quality assessment, omit for very large datasets.
-- Computational complexity: $O(N^2)$
-- Can be time-consuming when $N > 40,000$
+- Computational complexity: $O(N^2)$, can be time-consuming when $N > 40,000$
 - Skip for initial exploratory runs on large datasets
 
 **Usage**:
@@ -75,18 +74,14 @@ python Multiscale_hmds.py ... --min-cluster-size 3 --map-outlier --outlier-neigh
 
 ### Number of Clusters (`--n-clusters` / `--thresholds`)
 
-**What it controls**: The coarsest level of the hierarchical clustering structure.
+**What it controls**: The number of clusters that the data is divided into. 
 
 **Impact on quality**:
 - Embedding quality metrics are sensitive to cluster count only when very small (< 10 clusters)
-- Quality plateaus with sufficient clusters (≥ $n^{2/3}$)
-- Too few clusters: Poor capture of data structure
-- Too many clusters: Increased computational cost with marginal quality gains
 
 **Impact on runtime**:
 - Computational time varies significantly with cluster count
-- **Optimal value**: Approximately $n^{2/3}$ for best time-quality trade-off
-- See figures below for empirical validation
+- **Optimal value**: Approximately $n^{2/3}$ for best global-local embedding time trade-off
 
 **Feature matrix workflow** (K-means):
 ```bash
@@ -267,88 +262,122 @@ The motivation for the “exclude and remap” strategy is that very small clust
 
 **Problem**: Qlocal < 0.5 or Qglobal < 0.4
 
+**Diagnosis**:
+- **Low Qlocal**: Local neighborhood structure is not well-preserved
+- **Low Qglobal**: Global distance relationships are distorted
+
 **Solutions**:
 - **For low Qlocal**: 
+  - Increase `--neighbors` to capture more local context
   - Decrease `--min-cluster-size` to avoid filtering too many outliers
   - Try higher dimensions (3D or 5D instead of 2D)
 - **For low Qglobal**: 
-  - Increase `--neighbors` to emphasize global structure (try 50-100)
+  - Increase `--neighbors` to emphasize global structure
   - Adjust cluster count closer to $n^{2/3}$
+  - Check if your data has inherent hierarchical structure
 - **Data quality checks**:
-  - Remove extreme outliers before embedding
-  - Normalize/standardize features (zero mean, unit variance)
-  - For distance matrices: verify symmetry, non-negativity, and triangle inequality
+  - Remove extreme outliers
+  - Normalize features (zero mean, unit variance)
+  - Verify distance matrix is valid (symmetric, non-negative)
 
 ### 2. Slow Runtime
 
-**Problem**: Embedding takes > 30 minutes for datasets with < 50,000 samples
+**Problem**: Embedding takes > 30 minutes
 
-**Diagnosis**: 
-- Check console output to identify which step is slow:
-  - Clustering step
-  - Global embedding (centroid embedding)
-  - Local embedding (refining individual points)
-- Slowest steps are typically global and local embedding
+**Diagnosis**: Check which step is slow (clustering, global embedding, or local embedding)
 
 **Solutions**:
-- **Optimize cluster count**: Aim for $n^{2/3}$ clusters (most critical factor)
-  - Too few clusters (< $n^{1/2}$): Slow local embedding due to large clusters
-  - Too many clusters (> $n^{3/4}$): Slow global embedding due to many centroids
-  - Use `Generate_cls.py` with different parameters to adjust cluster count
+- **Optimize cluster count**: Aim for $n^{2/3}$ clusters
+  - Too few clusters: Slow local embedding
+  - Too many clusters: Slow global embedding
 - **Control cluster sizes**:
-  - Set `--max-cluster-size 400` to subdivide large clusters (prevents slow local steps)
-  - Set `--min-cluster-size 3` to exclude very small clusters (speeds up global step)
-- **Reduce neighbors**: 
-  - Use 20-30 for 2D/3D embeddings instead of 50+
-  - Each neighbor constraint adds computational cost
-- **Skip metrics**: 
-  - Omit `--compute-metrics` flag (saves $O(N^2)$ time for large datasets)
-  - Calculate metrics separately only when needed
+  - Set `--max-cluster-size 400` to subdivide large clusters
+  - Set `--min-cluster-size 3` to exclude small clusters
+- **Reduce neighbors**: Use 20-30 for 2D/3D instead of 50+
+- **Skip metrics**: Omit `--compute-metrics` flag (saves $O(N^2)$ time)
+- **For very large datasets**: Use the large-scale variant in `MuH-MDS/large_scale_hmds.py`
 
 ### 3. Poor Visualization
 
-**Problem**: Points clustered in center, at boundary, or with poor separation
+**Problem**: All points clustered in center or at boundary
 
 **Diagnosis**:
-- **Points concentrated at center**: 
-  - Insufficient hierarchical structure in data
-  - Data may be inherently flat (Euclidean)
-- **Points pushed to boundary**: 
-  - Numerical issues during optimization
-  - Extreme distance values in input
-- **Poor separation**: 
-  - Insufficient dimensions to capture structure
-  - Suboptimal parameter choices
+- Points at center: Insufficient hierarchy or flat structure
+- Points at boundary: Numerical issues or extreme distances
 
 **Solutions**:
-- **Coordinate conversion** (critical for Poincaré disk visualization):
-  - Use `to_native()` function from the example notebook to convert to native coordinates
+- **Convert coordinates**: Use `to_native()` function from the example notebook
   ```python
-  from MHMDS.embed_funs import to_native
-  native_coords = to_native(poincare_coords, model='CM2')
+  native_coords = to_native(poincare_coords)
   ```
-  - This transforms Poincaré ball coordinates to more interpretable native space
-- **Check embedding quality**: 
-  - Inspect metrics file - Qlocal < 0.4 or Qglobal < 0.3 indicate failed embedding
-  - Review console output for optimization warnings
-- **Try higher dimensions**: 
-  - Use 3D instead of 2D for complex structures
+- **Check embedding quality**: Inspect metrics file - low metrics indicate failed embedding
+- **Try higher dimensions**: Use 3D instead of 2D for complex structures
+- **Adjust parameters**:
+  - Increase `--neighbors` for more constraints
+  - Adjust cluster count
+  - Try different `--max-cluster-size`
+- **Data preprocessing**:
+  - Apply PCA if features > 100 (keep 50-100 components)
+  - Standardize features
+  - Remove duplicate samples
 
-### Parameter Selection Workflow
+### 4. Numerical Errors
 
-1. **Determine dataset size** $n$ and calculate target cluster count $\approx n^{2/3}$
-2. **Generate clusters**: Use `Generate_cls.py` with appropriate method (K-means or agglomerative)
-3. **Choose dimension**: 2D for simple visualization, 3D for quality, 5D+ for maximum detail
-4. **Set neighbors**: 30 for 2D, 50 for 3D-5D, 75+ for high dimensions or hierarchical data
-5. **Set cluster size bounds**: `--max-cluster-size 400` and `--min-cluster-size 3` (for n > 3,000)
-6. **Run embedding**: Include `--save-matrix`, `--compute-metrics`, and `--map-outlier` flags
-7. **Visualize results**: Convert coordinates with `to_native()` and assess quality metrics
-8. **Iterate if needed**: Adjust parameters based on troubleshooting guide above
+**Problem**: Stan model fails or returns NaN values
 
-## Resources
+**Solutions**:
+- **For distance matrices**:
+  - Verify all values are non-negative
+  - Check for infinite values
+  - Ensure matrix is symmetric
+  - Verify triangle inequality holds (approximately)
+- **For feature matrices**:
+  - Remove NaN or infinite values
+  - Standardize features (critical for numerical stability)
+  - Check for constant features (zero variance)
+- **Reduce neighbors**: Try smaller `--neighbors` value
+- **Check Stan installation**: Ensure CmdStanPy 1.1.0 and models are compiled
 
-- **Example usage**: See [2-Example Usage.md](2-Example%20Usage.md) for step-by-step tutorials and command examples
-- **Algorithm overview**: See [1-Overview.md](1-Overview.md) for conceptual background and method description
-- **Interactive examples**: Open [example-usage.ipynb](example-usage.ipynb) for working Python code with visualizations
-- **Source code**: Explore `MHMDS/` folder for implementation details and Stan models
+### 5. Memory Errors
+
+**Problem**: Out of memory during embedding
+
+**Solutions**:
+- Reduce `--neighbors` (major memory reduction)
+- Increase `--min-cluster-size` to exclude more small clusters
+- Increase `--max-cluster-size` to reduce hierarchy depth
+- Remove `--save-matrix` flag if intermediate matrices not needed
+- For distance matrices: Use feature matrix workflow instead (more memory-efficient)
+- Consider using a machine with more RAM or the large-scale variant
+
+---
+
+## Summary
+
+### Quick Recommendations by Use Case
+
+| Use Case | Dimension | Neighbors | Clusters | Max Size | Min Size |
+|----------|-----------|-----------|----------|----------|----------|
+| **Quick visualization** | 2 | 30 | $n^{2/3}$ | 400 | 1 |
+| **Quality embedding** | 3-5 | 50 | $n^{2/3}$ | 400 | 3 |
+| **Large dataset (>50k)** | 3 | 50-100 | $n^{2/3}$ | 500 | 3-5 |
+| **Small dataset (<1k)** | 2-3 | 10-20 | 20-50 | 300 | 1 |
+| **Hierarchical data** | 2-3 | 50-100 | $n^{2/3}$ | 400 | 3 |
+| **Trajectory data** | 2-3 | 10-30 | $n^{2/3}$ | 400 | 1 |
+
+### Key Takeaways
+
+1. **Always aim for** $n^{2/3}$ **clusters** for optimal runtime
+2. **Use more neighbors** (50-100) for hierarchical data, fewer (10-30) for trajectories
+3. **3D embeddings** provide the best balance between quality and visualization
+4. **Set max-cluster-size ≤ 400** to avoid slow local embedding
+5. **Set min-cluster-size = 3** for large datasets (>3,000 samples)
+6. **Always use `--save-matrix`** to enable visualization and analysis
+7. **Hyperbolic space is efficient**: 2-3D captures most hierarchical structure
+
+### Further Reading
+
+- **Example usage**: See [2-Example Usage.md](2-Example%20Usage.md) for hands-on tutorials
+- **Algorithm intuition**: See [1-Overview.md](1-Overview.md) for conceptual background
+- **Interactive examples**: Run [example-usage.ipynb](example-usage.ipynb) for working code
 

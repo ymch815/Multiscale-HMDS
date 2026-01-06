@@ -339,6 +339,7 @@ For detailed parameter tuning, see [Parameter Guide](3-Parameters.md).
 
 ---
 **Resources**:
-- Check the [ReadMe](../ReadMe.md) for installation issues
-- Review [Parameter Guide](3-Parameters.md) for tuning advice
-- Examine the Jupyter notebook ([example-usage.ipynb](example-usage.ipynb)) for working examples
+- **Algorithm intuition**: See [1-Overview.md](1-Overview.md) for conceptual background
+- **Example usage**: See [2-Example Usage.md](2-Example%20Usage.md) for hands-on tutorials
+- **Interactive examples**: Run [example-usage.ipynb](example-usage.ipynb) for working code
+- **Parameter selection**:Review [Parameter Guide](3-Parameters.md) for tuning advice
