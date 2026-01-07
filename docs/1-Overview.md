@@ -159,6 +159,7 @@ MuH-MDS uses the Poincaré ball model of hyperbolic space:
 - **Curvature**: Constant negative curvature parameterized by λ (learned from data)
 - **Coordinates**: The algorithm returns standard Cartesian coordinates in Poincaré ball model 
 
----
-
-**Next Steps**: See [Example Usage](2-Example%20Usage.md) for hands-on examples and [Parameters](3-Parameters.md) for detailed hyperparameter selection guidance.
+## Resources
+- **Example usage**: See [2-Example Usage.md](2-Example%20Usage.md) for hands-on tutorials
+- **Interactive examples**: Run [example-usage.ipynb](example-usage.ipynb) for working code for 2-Example Usage.md
+- **Parameter selection**:Review [3-Parameters](3-Parameters.md) for hyperparameter selection advice

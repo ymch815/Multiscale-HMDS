@@ -314,9 +314,8 @@ python Multiscale_hmds.py ... --max-cluster-size 400
 8. **Iterate if needed**: Adjust parameters based on troubleshooting guide above
 
 ## Resources
-
-- **Example usage**: See [2-Example Usage.md](2-Example%20Usage.md) for step-by-step tutorials and command examples
-- **Algorithm overview**: See [1-Overview.md](1-Overview.md) for conceptual background and method description
-- **Interactive examples**: Open [example-usage.ipynb](example-usage.ipynb) for working Python code with visualizations
+- **Algorithm intuition**: See [1-Overview.md](1-Overview.md) for conceptual background
+- **Example usage**: See [2-Example Usage.md](2-Example%20Usage.md) for hands-on tutorials
+- **Interactive examples**: Run [example-usage.ipynb](example-usage.ipynb) for working code for 2-Example Usage.md
 - **Source code**: Explore `MHMDS/` folder for implementation details and Stan models
 

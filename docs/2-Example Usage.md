@@ -2,7 +2,9 @@
 
 This guide walks you through using MuH-MDS with two complete examples:
 - **Toggle Switch**: Feature matrix workflow demonstrating synthetic gene regulatory network data
+  - Using this example, we also visualized the difference between recentering methods
 - **WordNet Mammals**: Distance matrix workflow showcasing hierarchical taxonomy embedding
+  - Using this example, we also visualized the difference between Poincare and native coordinates
 
 By the end of this tutorial, you will understand:
 - How to prepare data, run clustering and embedding
@@ -41,7 +43,7 @@ wc -l ../data/FeatMat_ToggleSwitch/FeatMat_ToggleSwitch.txt
 head -n 3 ../data/FeatMat_ToggleSwitch/FeatMat_ToggleSwitch.txt
 ```
 
-### 1.2 Step 1: Hierarchical Clustering
+### 1.2 Step 1: Clustering
 
 Navigate to the feature matrix workflow directory and generate clusters:
 
@@ -134,7 +136,7 @@ In the Toggle Switch example, we tried both recentering methods.
 </p>
 
 <p align="center">
-  <em>Figure 1. Toggle Switch embedding in 2D hyperbolic space, showing two stable states and transition trajectories.</em>
+  <em>Figure 1. Toggle Switch embedding in 2D hyperbolic space, showing two stable states and transition trajectories. The same embedding are recentered by the center of mass of different subgroups of samples.</em>
 </p>
 
 **Quality metrics interpretation**:
@@ -151,8 +153,8 @@ In the Toggle Switch example, we tried both recentering methods.
 The WordNet Mammals dataset represents a hierarchical taxonomy from the WordNet lexical database. This is a tree-like structure where species are grouped by biological classification (order, family, genus).
 
 **Dataset characteristics**:
-- **Type**: Distance matrix (pairwise distances)
 - **Size**: 1180 mammal species
+- **Type**: Distance matrix (1180 * 1180, pairwise distances)
 - **Location**: `data/DistMat_mammalwords/DistMat_mammalwords.txt`
 - **Distances**: Graph distances in the WordNet taxonomy tree
 
@@ -170,7 +172,7 @@ To inspect the data:
 wc -l ../data/DistMat_mammalwords/DistMat_mammalwords.txt
 ```
 
-### 2.3 Step 1: Hierarchical Clustering
+### 2.3 Step 1: Clustering
 
 Navigate to the distance matrix workflow directory and generate clusters:
 
@@ -237,11 +239,12 @@ Visualize using the companion notebook ([example-usage.ipynb](example-usage.ipyn
 - For instance, feline and canine nodes are positioned close to carnivore
 
 **Poincare coordinate v.s. native coordinate: How to choose**
+
 We use the WordNet example as an illustration for the difference between Poincare and native coordinates. 
 - The Poincare coordinates is bounded to radius = 1. Therefore, distances are increasingly distorted near the boundary: Euclidean distances near ∥x∥ ≈ 1 correspond to very large hyperbolic distances. One can see this from the embedding by how "hunting_dog", "terrier" and "working_dog" are so close to each other (left), while they are actually separated and the difference can be tell from the native coordinates (right)
 - Poincare coordinates emphasis more details around the root, while compress the boundary. 
 - Native coordinates reflect information around the boundary better.
-- For visualization, we typically prefer native coordinates because radial distance directly corresponds to hyperbolic distance and hierarchy depth, whereas the Poincare ́ model compresses large hyperbolic distances near the boundary, making relative depths harder to interpret quanti- tatively.
+- For visualization, we typically prefer native coordinates because radial distance directly corresponds to hyperbolic distance and hierarchy depth, whereas the Poincare model compresses large hyperbolic distances near the boundary, making relative depths harder to interpret quantitatively.
 
 <p align="center">
   <img src="images/wordnet_mammals_embedding.png" width="800">
@@ -274,7 +277,7 @@ We use the WordNet example as an illustration for the difference between Poincar
 - **Location**: Place in `data/FeatMat_MyData/FeatMat_MyData.txt`
 
 **Recommended preprocessing**:
-1. **Normalization**: Standardize features. For example, for bioinformatics data, please follow the common preprocessing pipeline (quality control, lognormal, PCA...). 
+1. **Normalization**: Standardize features. For example, for bioinformatics data, please follow the common preprocessing pipeline (quality control, **lognormal**, PCA...). 
 2. **Dimensionality reduction**: Use PCA if features > 100 (keep 50-100 PCs)
 3. **Quality control**: Remove outliers, filter low-quality samples
 
@@ -297,16 +300,8 @@ We use the WordNet example as an illustration for the difference between Poincar
 - **Values**: Non-negative distances (0 = identical, larger = more dissimilar)
 - **Location**: Place in `data/DistMat_MyData/DistMat_MyData.txt`
 
-**Valid distance metrics**:
-- Graph distances (shortest paths)
-- Phylogenetic distances
-- Edit distances (strings, sequences)
-- Dissimilarity measures (1 - correlation, etc.)
-
 **Important**: 
 - **Must satisfy triangle inequality** (or be close)
-- Diagonal should be zeros
-- Matrix must be symmetric
 
 **Example format**:
 ```
@@ -320,26 +315,39 @@ We use the WordNet example as an illustration for the difference between Poincar
 
 ### 3.3 Parameter selection: quick guidelines
 
-| Dataset Size | Neighbors | Clusters | Max Cluster Size |
-|--------------|-----------|----------|------------------|
-| < 1,000      | 5-10      | 10-20    | 200-400          |
-| 1,000-10,000 | 10-30     | 20-50    | 200-500          |
-| > 10,000     | 30-100    | 50-100   | 500-1000         |
+**For detailed parameter tuning, see [Parameter Guide](3-Parameters.md).**
+
+#### Core Parameters by Dataset Size
+
+| Dataset Size | Number of Clusters | Dimensions | Max Cluster Size | Min Cluster Size | 
+|--------------|-------------------|------------|------------------|------------------|
+| < 1,000 | 10-100 | 2-3 | 200-400 | 1 |
+| 1,000-10,000 | 100-200 | 3-5 | 200-500 | 3 |
+| 10,000-50,000 | 200-300 | 3-10 | 500-1000 | 3 |
+| > 50,000 | 300-800 | 5-10 | 400-500 | 3-5 |
+
+**Note**: The optimal number of clusters for computational efficiency is approximately $n^{2/3}$, where $n$ is the dataset size.
+
+#### Number of Neighbors by Dimension
+
+| Embedding Dimension | Recommended Neighbors |
+|---------------------|----------------------|
+| 2-3 | 30 |
+| 4-10 | 50 |
+| 10-20 | 75 |
+
+**Rule of thumb**: Use at least `dimension × 3` neighbors for high-dimensional embeddings.
 
 **Start simple**:
 1. Use defaults for first run
 2. Visualize results
 3. Adjust parameters based on quality metrics
-   - If local structure is poor: increase `--neighbors`
-   - If visualization is cluttered: increase `--dimension` to 3D or 5D
-   - If runtime is too long: decrease `--neighbors` or increase `--max-cluster-size`
+   - If local/global structure is poor: increase `--neighbors` or `--dimension` (Recommended: 3-D)
+   - If runtime is too long: 
+     - target cluster count $\approx n^{2/3}$, where n is the number of samples
+     - Set `--max-cluster-size 400` and `--min-cluster-size 3` to control cluster sizes
 4. Iterate to optimize
 
-For detailed parameter tuning, see [Parameter Guide](3-Parameters.md).
-
----
-**Resources**:
+## Resources:
 - **Algorithm intuition**: See [1-Overview.md](1-Overview.md) for conceptual background
-- **Example usage**: See [2-Example Usage.md](2-Example%20Usage.md) for hands-on tutorials
-- **Interactive examples**: Run [example-usage.ipynb](example-usage.ipynb) for working code
-- **Parameter selection**:Review [Parameter Guide](3-Parameters.md) for tuning advice
+- **Parameter selection**:Review [3-Parameters](3-Parameters.md) for hyperparameter selection advice

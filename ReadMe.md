@@ -122,4 +122,4 @@ For more detailed tutorial, please refer to the following docs:
 - **Algorithm intuition**: See [1-Overview.md](1-Overview.md) for conceptual background
 - **Example usage**: See [2-Example Usage.md](2-Example%20Usage.md) for hands-on tutorials
 - **Interactive examples**: Run [example-usage.ipynb](example-usage.ipynb) for working code for 2-Example Usage.md
-- **Parameter selection**:Review [3-Parameters](3-Parameters.md) for tuning advice
+- **Parameter selection**:Review [3-Parameters](3-Parameters.md) for hyperparameter selection advice
