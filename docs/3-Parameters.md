@@ -74,7 +74,7 @@ python Multiscale_hmds.py ... --min-cluster-size 3 --map-outlier --outlier-neigh
 
 ### Number of Clusters (`--n-clusters` / `--thresholds`)
 
-**What it controls**: The number of clusters that the data is divided into. 
+**What it controls**: The number of clusters that the data points are divided into. 
 
 **Impact on quality**:
 - Embedding quality metrics are sensitive to cluster count only when very small (< 10 clusters)
@@ -83,20 +83,16 @@ python Multiscale_hmds.py ... --min-cluster-size 3 --map-outlier --outlier-neigh
 - Computational time varies significantly with cluster count
 - **Optimal value**: Approximately $n^{2/3}$ for best global-local embedding time trade-off
 
-**Feature matrix workflow** (K-means):
+**Feature matrix workflow** (K-means, Specify exact number of clusters):
 ```bash
 python Generate_cls.py --featmat MyData.txt --n-clusters 150
 ```
-- Specify exact number of clusters
-- For dataset with 10,000 samples: $10000^{2/3} \approx 215$ clusters
 
-**Distance matrix workflow** (Agglomerative clustering):
+**Distance matrix workflow** (Agglomerative clustering, Specify distance threshold instead of cluster count):
 ```bash
 python Generate_cls.py --distmat MyData.txt --thresholds 0.4
 ```
-- Specify distance threshold instead of cluster count
-- Start with `threshold = 0.4` and examine resulting cluster count
-- Iterate to achieve approximately $n^{2/3}$ clusters
+- Start with `threshold = 0.4` and examine resulting cluster count. Iterate to achieve approximately $n^{2/3}$ clusters
 
 **Recommendations**:
 - **< 1,000 samples**: 10-100 clusters
@@ -108,47 +104,37 @@ python Generate_cls.py --distmat MyData.txt --thresholds 0.4
   <img src="images/k_quality.png" width="400">
 </p>
 <p align="center">
-  <em>Figure 1a: Embedding quality (Qlocal and Qglobal) vs. number of clusters. Quality is insensitive to cluster count when sufficient clusters are used.</em>
+  <em>Figure 1a: Embedding quality (Qlocal and Qglobal) vs. number of clusters. Quality is insensitive to cluster count when sufficient clusters are used (> 10).</em>
 </p>
 
 <p align="center">
   <img src="images/k_time.png" width="400">
 </p>
 <p align="center">
-  <em>Figure 1b: Computational time vs. number of clusters. Optimal cluster count (n<sup>2/3</sup>) minimizes runtime while maintaining quality.</em>
+  <em>Figure 1b: Computational time vs. number of clusters for 2730 samples. Optimal cluster count (n<sup>2/3</sup>) minimizes runtime while maintaining quality.</em>
 </p>
 
 ---
 
 ### Number of Neighbors (`--neighbors`)
 
-**What it controls**: The number of nearest neighbors used to constrain local geometry during embedding.
+**What it controls**: The number of nearest neighboring clusters used to constrain local geometry during embedding.
 
 **Impact on quality**:
-- Sensitivity depends on embedding dimension:
-  - **Low dimensions (2-3D)**: Quality relatively insensitive to neighbor count
-  - **High dimensions (>5D)**: More neighbors required as constraints
-- More neighbors are needed in higher dimensions to uniquely determine point positions
-
-**Impact on local vs. global structure**:
-- **Fewer neighbors (5-20)**: Emphasizes fine-grained local structure
-  - Best for trajectory data, manifolds, gradual transitions
-- **More neighbors (50-100)**: Emphasizes broad global structure
-  - Best for hierarchical data, discrete clusters, tree structures
+- Sensitivity depends on embedding dimension: More neighbors are needed in higher dimensions to uniquely determine point positions
 
 **Recommendations**:
 - **2D-3D embeddings**: 20-30 neighbors (sufficient for visualization)
 - **4D-10D embeddings**: 50 neighbors
 - **10D-20D embeddings**: 75 neighbors
 - **General rule**: Use at least `dimension × 3` neighbors
-- **Alternative rule**: Use 5-10% of dataset size
 
 **Example**:
 ```bash
-# Low-dimensional visualization (emphasize local structure)
+# Low-dimensional visualization
 python Multiscale_hmds.py ... --neighbors 30 --dimension 3
 
-# High-dimensional embedding (emphasize global structure)
+# High-dimensional embedding
 python Multiscale_hmds.py ... --neighbors 75 --dimension 15
 ```
 
@@ -156,7 +142,7 @@ python Multiscale_hmds.py ... --neighbors 75 --dimension 15
   <img src="images/alpha_quality.png" width="600">
 </p>
 <p align="center">
-  <em>Figure 2: Embedding quality vs. number of neighbors for different dimensions. Higher dimensions require more neighbors, while 2D-3D embeddings are relatively insensitive.</em>
+  <em>Figure 2: Embedding quality vs. number of neighbors for different dimensions. As dimension increase from 5D to 20D, it requires more neighbors to better constraint the embedding in high dimensions.</em>
 </p>
 
 ---
@@ -168,30 +154,26 @@ python Multiscale_hmds.py ... --neighbors 75 --dimension 15
 **Impact on quality**:
 - **Qlocal** (local structure): Improves monotonically with dimension
   - More dimensions = more capacity to capture fine details
-- **Qglobal** (global structure): Saturates around D = 4
-  - Hyperbolic geometry captures most global information in low dimensions
-- **Correlation**: Saturates around D = 4
-  - Distance preservation plateaus quickly
+- **Qglobal and Correlation**: Saturates around D = 4
+  - Hyperbolic geometry captures most global information in as low as 3-4 dimensions
 
-**Key insight**: Hyperbolic space is remarkably efficient at representing hierarchical and global structure in just 2-3 dimensions, unlike Euclidean methods which often require many more dimensions.
+**Key insight**: Hyperbolic space is remarkably efficient at representing global structure in just 2-3 dimensions, unlike Euclidean methods which often require many more dimensions.
 
 **Trade-offs**:
-- **2D**: Best for visualization, easy interpretation, fast computation
+- **2D**: Best for visualization, but may not fully capture local structures for large datasets 
 - **3D**: Optimal balance between visualization and detail preservation
 - **5D-10D**: Capture complex structures, require dimensionality reduction for visualization
-- **>10D**: Maximum quality, but visualization requires projection
 
 **Recommendations**:
 - **For visualization**: Use 2D or 3D (preferred: 3D)
-- **For downstream analysis**: Use 3D-5D for best quality
-- **For maximum quality**: Use 5D-10D, accept visualization complexity
+- **For maximum quality**: Use 4D-10D for best quality. Further dimension reduction required for visualization. 
 
 **Example**:
 ```bash
 # Visualization-focused
 python Multiscale_hmds.py ... --dimension 2 --neighbors 30
 
-# Quality-focused
+# If want higher quality:
 python Multiscale_hmds.py ... --dimension 5 --neighbors 50
 ```
 
@@ -199,14 +181,14 @@ python Multiscale_hmds.py ... --dimension 5 --neighbors 50
   <img src="images/dimension.png" width="400">
 </p>
 <p align="center">
-  <em>Figure 3: Embedding quality vs. dimension. Qlocal continues improving, while Qglobal saturates at D=4, demonstrating hyperbolic space's efficiency at capturing global structure.</em>
+  <em>Figure 3: Embedding quality vs. dimension. Qlocal continues improving, while Qglobal and correlation saturates at D=4, demonstrating hyperbolic space's efficiency at capturing global structure.</em>
 </p>
 
 ---
 
 ### Maximum Cluster Size (`--max-cluster-size`)
 
-**What it controls**: The maximum allowed size for clusters before subdivision during refinement.
+**What it controls**: The maximum allowed size for clusters before subdivision.
 
 **Purpose**: Prevent extremely large clusters that would slow down local embedding steps.
 
@@ -245,139 +227,96 @@ python Multiscale_hmds.py ... --max-cluster-size 400
 
 
 ### Min Cluster Size (`--min-cluster-size`)
+**What it controls**: The minimal allowed cluster size. 
 
-For very small clusters, for example, those with only 1-2 samples in a cluster, we apply an “exclude and remap” procedure to reduce the total number of clusters in the global embedding step. Specifically, small clusters are excluded from the global-local embedding process and are mapped to the embedding space only after all other points have been embedded. 
+**Purpose**: Very small clusters provide poor constraints and can degrade centroid-based global structure. This parameter avoids very small clusters increase number of clusters and slow down global embedding step. 
 
-The motivation for the “exclude and remap” strategy is that very small clusters provide poor constraints and can degrade centroid-based global structure. By excluding clusters that are too small, the algorithm focuses on capturing the geometry of the majority of points during the embedding step, leading to a more precise representation of the global geometry.
-
+**How it works**:
+- Clusters smaller than this size will be filtered out before global-local embedding. 
+- If needed, they can be remapped to the space after other clusters have been embedded. 
 - **No filtering (min-cluster-size = 1)**: None of the clusters are excluded, may increase global embedding time significantly and reduce embedding quality. 
 - **Filter very small clusters (min-cluster-size = 3)**: Fair control of filtering, benefits both quality and embedding time
 - **Filter medium size clusters (min-cluster-size = 10)**: May increase time in remapping and lose information in those clusters filtered
-- For small datasets (size < 3,000) it is acceptable to use `min-cluster-size = 1`, for large datasets we suggest using `min-cluster-size = 3`.
 
+**Impact on runtime**:
+- Reduce running time when chosen properly
+
+**Impact on quality**:
+- Optimize quality when optimal running time is obtained (Fig. 4)
+
+**Recommendations**:
+- For small datasets (size < 3,000) it is acceptable to use `min-cluster-size = 1`, for large datasets we suggest using `min-cluster-size = 3`.
 
 ## Troubleshooting Common Issues
 
 ### 1. Low Quality Metrics
 
-**Problem**: Qlocal < 0.5 or Qglobal < 0.4
-
-**Diagnosis**:
-- **Low Qlocal**: Local neighborhood structure is not well-preserved
-- **Low Qglobal**: Global distance relationships are distorted
+**Problem**: Qlocal < 0.5 or Qglobal < 0.6
 
 **Solutions**:
 - **For low Qlocal**: 
-  - Increase `--neighbors` to capture more local context
-  - Decrease `--min-cluster-size` to avoid filtering too many outliers
+  - Increase `--neighbors`
+  - Decrease `--min-cluster-size` to avoid filtering too many "outliers"
   - Try higher dimensions (3D or 5D instead of 2D)
 - **For low Qglobal**: 
-  - Increase `--neighbors` to emphasize global structure
-  - Adjust cluster count closer to $n^{2/3}$
-  - Check if your data has inherent hierarchical structure
-- **Data quality checks**:
-  - Remove extreme outliers
+  - Increase `--neighbors`
+- **Applies to both cases**:
+  - Remove extreme outliers before embedding
   - Normalize features (zero mean, unit variance)
-  - Verify distance matrix is valid (symmetric, non-negative)
+  - For distance matrices: verify symmetry, non-negativity, and triangle inequality
 
 ### 2. Slow Runtime
 
-**Problem**: Embedding takes > 30 minutes
-
-**Diagnosis**: Check which step is slow (clustering, global embedding, or local embedding)
+**Problem**: Embedding takes > 20 minutes for dataset < 10,000 samples
 
 **Solutions**:
 - **Optimize cluster count**: Aim for $n^{2/3}$ clusters
-  - Too few clusters: Slow local embedding
-  - Too many clusters: Slow global embedding
 - **Control cluster sizes**:
-  - Set `--max-cluster-size 400` to subdivide large clusters
-  - Set `--min-cluster-size 3` to exclude small clusters
+  - Set `--max-cluster-size 400` to subdivide large clusters (prevents slow local steps)
+  - Set `--min-cluster-size 3` to exclude very small clusters (speeds up global step)
 - **Reduce neighbors**: Use 20-30 for 2D/3D instead of 50+
 - **Skip metrics**: Omit `--compute-metrics` flag (saves $O(N^2)$ time)
-- **For very large datasets**: Use the large-scale variant in `MuH-MDS/large_scale_hmds.py`
 
 ### 3. Poor Visualization
 
-**Problem**: All points clustered in center or at boundary
+**Problem**: Points clustered in center, at boundary, or with poor separation
 
 **Diagnosis**:
-- Points at center: Insufficient hierarchy or flat structure
-- Points at boundary: Numerical issues or extreme distances
+- **Points concentrated at center**: 
+  - Insufficient hierarchical structure in data
+  - Data may be inherently flat (Euclidean)
+- **Points pushed to boundary**: 
+  - Extreme distance values in input
+  - Numerical issues during optimization
+- **Poor separation**: 
+  - Insufficient dimensions to capture structure
+  - Suboptimal parameter choices
 
 **Solutions**:
-- **Convert coordinates**: Use `to_native()` function from the example notebook
+- **Convert coordinates**: Use `to_native()` function
   ```python
-  native_coords = to_native(poincare_coords)
+  import MHMDS.embed_funs as emb
+  native_coords = emb.to_native(poincare_coords)
   ```
+  - Extreme distance values in input
 - **Check embedding quality**: Inspect metrics file - low metrics indicate failed embedding
 - **Try higher dimensions**: Use 3D instead of 2D for complex structures
-- **Adjust parameters**:
-  - Increase `--neighbors` for more constraints
-  - Adjust cluster count
-  - Try different `--max-cluster-size`
-- **Data preprocessing**:
-  - Apply PCA if features > 100 (keep 50-100 components)
-  - Standardize features
-  - Remove duplicate samples
 
-### 4. Numerical Errors
+### Parameter Selection Workflow
 
-**Problem**: Stan model fails or returns NaN values
+1. **Determine dataset size** $n$ and calculate target cluster count $\approx n^{2/3}$
+2. **Generate clusters**: Use `Generate_cls.py` with appropriate method (K-means or agglomerative)
+3. **Choose dimension**: 2D for simple visualization, 3D for quality, 5D+ for maximum detail
+4. **Set neighbors**: 30 for 2D, 50 for 3D-5D, 75+ for high dimensions or hierarchical data
+5. **Set cluster size bounds**: `--max-cluster-size 400` and `--min-cluster-size 3` (for n > 3,000)
+6. **Run embedding**: Include `--save-matrix`, `--compute-metrics`, and `--map-outlier` flags
+7. **Visualize results**: Convert coordinates with `to_native()` and assess quality metrics
+8. **Iterate if needed**: Adjust parameters based on troubleshooting guide above
 
-**Solutions**:
-- **For distance matrices**:
-  - Verify all values are non-negative
-  - Check for infinite values
-  - Ensure matrix is symmetric
-  - Verify triangle inequality holds (approximately)
-- **For feature matrices**:
-  - Remove NaN or infinite values
-  - Standardize features (critical for numerical stability)
-  - Check for constant features (zero variance)
-- **Reduce neighbors**: Try smaller `--neighbors` value
-- **Check Stan installation**: Ensure CmdStanPy 1.1.0 and models are compiled
+## Resources
 
-### 5. Memory Errors
-
-**Problem**: Out of memory during embedding
-
-**Solutions**:
-- Reduce `--neighbors` (major memory reduction)
-- Increase `--min-cluster-size` to exclude more small clusters
-- Increase `--max-cluster-size` to reduce hierarchy depth
-- Remove `--save-matrix` flag if intermediate matrices not needed
-- For distance matrices: Use feature matrix workflow instead (more memory-efficient)
-- Consider using a machine with more RAM or the large-scale variant
-
----
-
-## Summary
-
-### Quick Recommendations by Use Case
-
-| Use Case | Dimension | Neighbors | Clusters | Max Size | Min Size |
-|----------|-----------|-----------|----------|----------|----------|
-| **Quick visualization** | 2 | 30 | $n^{2/3}$ | 400 | 1 |
-| **Quality embedding** | 3-5 | 50 | $n^{2/3}$ | 400 | 3 |
-| **Large dataset (>50k)** | 3 | 50-100 | $n^{2/3}$ | 500 | 3-5 |
-| **Small dataset (<1k)** | 2-3 | 10-20 | 20-50 | 300 | 1 |
-| **Hierarchical data** | 2-3 | 50-100 | $n^{2/3}$ | 400 | 3 |
-| **Trajectory data** | 2-3 | 10-30 | $n^{2/3}$ | 400 | 1 |
-
-### Key Takeaways
-
-1. **Always aim for** $n^{2/3}$ **clusters** for optimal runtime
-2. **Use more neighbors** (50-100) for hierarchical data, fewer (10-30) for trajectories
-3. **3D embeddings** provide the best balance between quality and visualization
-4. **Set max-cluster-size ≤ 400** to avoid slow local embedding
-5. **Set min-cluster-size = 3** for large datasets (>3,000 samples)
-6. **Always use `--save-matrix`** to enable visualization and analysis
-7. **Hyperbolic space is efficient**: 2-3D captures most hierarchical structure
-
-### Further Reading
-
-- **Example usage**: See [2-Example Usage.md](2-Example%20Usage.md) for hands-on tutorials
-- **Algorithm intuition**: See [1-Overview.md](1-Overview.md) for conceptual background
-- **Interactive examples**: Run [example-usage.ipynb](example-usage.ipynb) for working code
+- **Example usage**: See [2-Example Usage.md](2-Example%20Usage.md) for step-by-step tutorials and command examples
+- **Algorithm overview**: See [1-Overview.md](1-Overview.md) for conceptual background and method description
+- **Interactive examples**: Open [example-usage.ipynb](example-usage.ipynb) for working Python code with visualizations
+- **Source code**: Explore `MHMDS/` folder for implementation details and Stan models
 
