@@ -102,7 +102,7 @@ The embedding produces several files in `test/FeatMat_ToggleSwitch/`:
 - `cls_20_Nn_10_Nd_2_min_1_max_400_coords_200.txt`: Individual sample coordinates (200 points)
 
 **Index file**:
-- `cls_20_Nn_10_Nd_2_min_1_max_400_inds_after_prep.txt`: Ordering information mapping embedded points back to original samples
+- `cls_20_Nn_10_Nd_2_min_1_max_400_inds_after_prep.txt`: Index of original data points in the order of embedded data points. Use this to map the order of embedded points back to the order of original samples. 
 
 **Metrics file**:
 - `cls_20_Nn_10_Nd_2_min_1_max_400_metrics.csv`: Quality metrics including:
@@ -116,6 +116,22 @@ The embedding produces several files in `test/FeatMat_ToggleSwitch/`:
 ### 1.5 Visualizing Results
 
 Load and visualize the embedding using the companion Jupyter notebook ([example-usage.ipynb](example-usage.ipynb))
+
+**Re-order the data points**: 
+
+MuH-MDS return the embedded points in a shuffled order (basically based on cluster orders). To join with the original metadata, we need to map the order of data points back to the original order. 
+```python
+# load embedding poincare coordinates and index of the data points
+result_dir = '../MultiscalehMDS_feature/test/FeatMat_ToggleSwitch/'
+prefix = 'cls_20_Nn_10_Nd_2_min_1_max_400'
+nsample = 200
+
+pcoords = np.loadtxt(result_dir+prefix+'_coords_%i.txt'%nsample)
+inds = np.loadtxt(result_dir+prefix+'_inds_after_prep.txt')
+
+# reorder pcoords to match original data order
+pcoords = pcoords[np.argsort(inds)]
+```
 
 **Visualization Result**: 
 - Points distributed in a disk (Poincaré disk model)

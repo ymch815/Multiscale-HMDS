@@ -291,6 +291,20 @@ python Multiscale_hmds.py ... --max-cluster-size 400
 - **Poor separation**: 
   - Insufficient dimensions to capture structure
   - Suboptimal parameter choices
+- **Coloring by metadata does not make sense**:
+  - Check if the embedded points have been properly re-ordered to the original order. 
+  Example:
+  ```python
+  result_dir = '../MultiscalehMDS_feature/test/FeatMat_ToggleSwitch/'
+  prefix = 'cls_20_Nn_10_Nd_2_min_1_max_400'
+  nsample = 200
+
+  pcoords = np.loadtxt(result_dir+prefix+'_coords_%i.txt'%nsample)
+  inds = np.loadtxt(result_dir+prefix+'_inds_after_prep.txt')
+
+  # reorder pcoords to match original data order
+  pcoords = pcoords[np.argsort(inds)]
+  ``` 
 
 **Solutions**:
 - **Convert coordinates**: Use `to_native()` function
