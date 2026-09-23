@@ -3,38 +3,33 @@ An algorithm for performing hyperbolic MDS on large scale datasets.
 
 This file covers set up and quick start guide. See [Tutorial](docs/1-Overview.md) for more detailed guides. 
 
-## Dependencies
+## Installation
 
-* cmdstanpy 1.1.0
-* numpy 1.23.5
-* scikit-learn 1.3.0
-* pandas 2.0.3
-* scipy 1.11.1
+MuH-MDS now uses a PyTorch L-BFGS optimization backend. CmdStan, a C++
+compiler, and a separate model-compilation step are no longer required.
+
+From a clone of this repository, create an isolated environment and install
+the package:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e .
+```
+
+The core dependencies are NumPy, SciPy, scikit-learn, pandas, and PyTorch. The
+tested dependency ranges are declared in `pyproject.toml`.
 
 
 ## Quick Start
 
-### Compile .stan files
-Stan files should be compiled before performing any embedding. 
+### Published Stan implementation
 
-To ensure compiling of .stan files, we recommend install only cmdstanpy in a independent environment, and compile all .stan files. 
-**This only needs to be done once.** After executable files have been compiled, it will be ready to perform optimization and there's no need to re-compile. 
+The original `.stan` model sources are retained for scientific reference. The
+exact implementation used for the paper is available from the `paper-v1.0`
+Git tag. CmdStanPy is not imported during normal execution.
 
-**Important check before first compiling**: Please make sure you only have .stan files in the directory, and remove executable files, .hpp files, etc. 
- 
-To compile, 
-```
-conda create -n stan-env -c conda-forge cmdstanpy
-conda activate stan-env 
-cd MHMDS 
-python compile_models.py
-```
-
-* Note: if there is anything wrong about the cmdstanpy, you can try to reinstall it:
-```
-from cmdstanpy import install_cmdstan
-install_cmdstan(overwrite = True)
-```
 ### Example use
 Perform Multiscale H-MDS on the Toggle Switch dataset onto 3-d hyperbolic space
 ```bash
