@@ -4,10 +4,7 @@
 # functions for embedding and visulization
 
 import numpy as np
-import cmdstanpy as stan
-
-import os
-cpath =  os.path.dirname(__file__)
+from MHMDS import torch_backend
 
 def logmap(vecarr):
     vec_r =  np.sqrt(np.sum(np.square(vecarr.T),axis=0))
@@ -108,17 +105,8 @@ def to_native(coords):
 
 # perform recentering given poincare coordinates
 def perform_recenter(pcoords,center_inds):
-    CM_m = stan.CmdStanModel(stan_file=cpath+'/CM2.stan')
     eucs = poin2euc(pcoords)
-    
-    
-    # convert pcoords to euc for recentering purpose
-    ex_data = {'N':center_inds.shape[0], 'D':pcoords.shape[1], 
-               'coords':eucs[center_inds]}
-    
-    
-    cm_fit = CM_m.optimize(data=ex_data)
-    cm_fit = {'CM':cm_fit.CM, 'CM_t':cm_fit.CM_t}
+    cm_fit = torch_backend.optimize_center_of_mass(eucs[center_inds])
     hyp_emb = {'euc':eucs,'pcoords':pcoords}
     data_recenter = re_center(hyp_emb,cm_fit)
     return data_recenter

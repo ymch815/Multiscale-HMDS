@@ -12,11 +12,9 @@ import sys
 sys.path.append(os.getcwd())
 import MHMDS.embed_funs as emb
 
-import cmdstanpy as stan
+from MHMDS import torch_backend
 
 from sklearn.manifold import MDS
-
-cpath =  os.path.dirname(__file__)
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -101,15 +99,8 @@ def avefeatmat_dmat(featmat, labels): # dmat and labels must be arranged by clus
     return emb.get_dmat_euc(np.array(avefeatmat))
 
 def embed_clusters(dmat,D):
-    # prepare model
-
-    ltz_model = stan.CmdStanModel(stan_file=cpath+'/lorentz2.stan')
-    data={'N':dmat.shape[0], 'D':D, 'deltaij':dmat}
-    model = ltz_model.optimize(data=data, iter=500000, algorithm='LBFGS', 
-                                   #tol_rel_grad=1e2, 
-                                   show_console=True, refresh=5000)
-    
-    hyp_emb = {'euc':model.euc, 'sig':model.sig, 'lambda':model.stan_variable('lambda')}
+    model = torch_backend.optimize_global(dmat, D)
+    hyp_emb = {'euc':model['euc'], 'sig':model['sig'], 'lambda':model['lambda']}
     emb.process_sim(hyp_emb)
     return hyp_emb
 
@@ -131,21 +122,10 @@ def embedlocal(center, localmat):
 def relax(prevfit, dmat_mutual, dmat_local, init_pos):
     # relax with fixed values
 
-    relax_model = stan.CmdStanModel(stan_file=cpath+'/relax.stan')
-    
-    Nnn = dmat_mutual.shape[1]
-    Nnew = dmat_local.shape[0]
-    D = prevfit['euc'].shape[1]
-    
-    init = {'euc_new':init_pos}
-
-    data = {'Ne':Nnn, 'Nn':Nnew, 'D':D, 'lambda':prevfit['lambda'], 
-                   'euc_emb':prevfit['euc'], 'deltaij_mutual':dmat_mutual,'deltaij':dmat_local}
-    
-    model = relax_model.optimize(data=data, iter=500000, algorithm='LBFGS', inits = init,
-                               #tol_rel_grad=1e2, 
-                               show_console=False, refresh=5000)
-    hyp_emb = {'euc':model.euc_new, 'sig':np.ones((len(model.euc_new),)), 'lambda':prevfit['lambda']}
+    model = torch_backend.optimize_relaxation(
+        prevfit['euc'], dmat_mutual, dmat_local, prevfit['lambda'], init_pos
+    )
+    hyp_emb = {'euc':model['euc'], 'sig':np.ones((len(model['euc']),)), 'lambda':prevfit['lambda']}
     emb.process_sim(hyp_emb)
     
     return hyp_emb
@@ -246,24 +226,17 @@ embed previously deleted outliers: use transform.stan to map them into existing 
 using the distance matrix of their nearest neighboring points
 '''
 def transform_new_point(euccoords,mutualmat,curvature):
-    
-    transform_model = stan.CmdStanModel(stan_file=cpath+'/transform.stan')
-    
-    Nnn = euccoords.shape[0]
-    Nnew = 1
-    D = euccoords.shape[1]
-    
-    init = {'euc_new':np.mean(euccoords,axis=0).reshape(1,-1)}
 
-    data = {'Ne':Nnn, 'Nn':Nnew, 'D':D, 'lambda':curvature, 
-                   'euc_emb':euccoords, 'sig_e':np.ones((Nnn,)),
-                   'deltaij_mutual':mutualmat,'deltaij':[[0]]}
-    
-    model = transform_model.optimize(data=data, iter=500000, algorithm='LBFGS', inits = init,
-                               #tol_rel_grad=1e2, 
-                               show_console=False, refresh=5000)
-    hyp_emb = {'euc':model.euc_new, 'sig':model.sig_n, 'lambda':curvature}
+    init_pos = np.mean(euccoords,axis=0).reshape(1,-1)
+    model = torch_backend.optimize_transform(
+        euccoords,
+        np.ones((euccoords.shape[0],)),
+        mutualmat,
+        np.zeros((1, 1)),
+        curvature,
+        init_pos,
+    )
+    hyp_emb = {'euc':model['euc'], 'sig':model['sig'], 'lambda':curvature}
     emb.process_sim(hyp_emb)
     
     return hyp_emb['pcoords'].reshape(-1)
-
