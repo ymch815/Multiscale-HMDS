@@ -6,7 +6,7 @@ This file covers set up and quick start guide. See [Tutorial](docs/1-Overview.md
 ## Installation
 
 MuH-MDS now uses a PyTorch L-BFGS optimization backend. CmdStan, a C++
-compiler, and a separate model-compilation step are no longer required.
+compiler, and a separate model-compilation step are **no longer required**.
 
 From a clone of this repository, create an isolated environment and install
 the package:
@@ -26,7 +26,7 @@ tested dependency ranges are declared in `pyproject.toml`.
 
 ### Published Stan implementation
 
-The original `.stan` model sources are retained for scientific reference. The
+**The original `.stan` model sources are retained for scientific reference**. The
 exact implementation used for the paper is available from the `paper-v1.0`
 Git tag. CmdStanPy is not imported during normal execution.
 
